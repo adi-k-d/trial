@@ -6,7 +6,7 @@ import NavItems from "./NavItems";
 
 
 export function Navbar() {
-    const session = true
+ 
   
     return (
         <nav className="flex items-center justify-between mx-auto w-full px-14 py-4 bg-white max-sm:px-4">

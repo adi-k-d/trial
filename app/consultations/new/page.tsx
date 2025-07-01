@@ -12,8 +12,37 @@ import { Card, CardContent } from '@/components/ui/card';
 
 declare global {
   interface Window {
-    Razorpay: any;
+    Razorpay: RazorpayConstructor;
   }
+}
+
+type RazorpayConstructor = new (options: RazorpayOptions) => RazorpayInstance;
+
+interface RazorpayInstance {
+  open(): void;
+}
+
+interface RazorpayOptions {
+  key: string;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  handler: (response: RazorpayPaymentResponse) => void;
+  prefill: {
+    name: string;
+    email: string;
+    contact: string;
+  };
+  theme: {
+    color: string;
+  };
+}
+
+interface RazorpayPaymentResponse {
+  razorpay_payment_id: string;
+  razorpay_order_id?: string;
+  razorpay_signature?: string;
 }
 
 export default function StartConsultationForm() {
@@ -58,7 +87,7 @@ export default function StartConsultationForm() {
       currency: 'INR',
       name: 'Consult Dr. Madhumita Mazumdar',
       description: 'Online Consultation',
-      handler: async function (response: any) {
+      handler: async function (response: RazorpayPaymentResponse) {
         const paymentId = response.razorpay_payment_id;
 
         // Save to Supabase

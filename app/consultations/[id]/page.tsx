@@ -8,11 +8,21 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 
+// Define a type for Consultation
+interface Consultation {
+  id: string;
+  created_at: string;
+  symptom: string;
+  details: string;
+  status: 'pending' | 'completed' | 'closed' | string;
+  doctor_response?: string;
+}
+
 export default function ConsultationDetailPage() {
   const supabase = createClientComponentClient();
   const { id } = useParams();
   const { user } = useUser();
-  const [consultation, setConsultation] = useState<any>(null);
+  const [consultation, setConsultation] = useState<Consultation | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
 
@@ -34,6 +44,7 @@ export default function ConsultationDetailPage() {
 
   useEffect(() => {
     fetchConsultation();
+    // Only run on id change
   }, [id]);
 
   const handleClose = async () => {
@@ -105,7 +116,7 @@ export default function ConsultationDetailPage() {
 
           {consultation.doctor_response && (
             <div className="mt-6">
-              <h2 className="text-md font-semibold">Doctor's Response</h2>
+              <h2 className="text-md font-semibold">Doctor&apos;s Response</h2>
               <p className="mt-2 text-gray-900 whitespace-pre-line">
                 {consultation.doctor_response}
               </p>
