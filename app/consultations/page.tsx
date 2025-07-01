@@ -25,16 +25,23 @@ export default function MyConsultationsPage() {
     const fetchConsultations = async () => {
       if (!user) return;
 
-      const { data, error } = await supabase
+      const role = user.publicMetadata?.role;
+
+      let query = supabase
         .from('consultations')
         .select('id, symptom, status, created_at')
-        .eq('patient_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (!error) {
-        setConsultations(data);
-      } else {
+      if (role !== 'admin') {
+        query = query.eq('patient_id', user.id);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
         console.error('Error fetching consultations:', error);
+      } else {
+        setConsultations(data);
       }
 
       setLoading(false);
@@ -57,7 +64,7 @@ export default function MyConsultationsPage() {
       {!loading && consultations?.length === 0 && (
         <Card className="bg-blue-50 border-blue-200">
           <CardContent className="p-6 space-y-4 text-center">
-            <p className="text-gray-700 text-lg">You haven’t started any consultations yet.</p>
+            <p className="text-gray-700 text-lg">No consultations found.</p>
             <Link href="/consultations/new">
               <Button variant="default" className="mt-2">Start a Consultation</Button>
             </Link>
@@ -87,7 +94,7 @@ export default function MyConsultationsPage() {
                 </span>
               </div>
               <Link
-                href={`/consultation/${c.id}`}
+                href={`/consultations/${c.id}`}
                 className="text-blue-600 text-sm font-medium hover:underline"
               >
                 View consultation →
