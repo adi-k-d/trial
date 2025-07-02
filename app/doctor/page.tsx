@@ -10,7 +10,7 @@ export default function DoctorPage() {
     <div className="max-w-3xl mx-auto px-4 py-10 space-y-10">
       <section className="text-center">
         <Image
-          src="/dr-madhumita.jpg"
+          src="/dr-madhumita-mazumdar.jpeg"
           alt="Dr. Madhumita Mazumdar"
           width={160}
           height={160}

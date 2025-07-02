@@ -1,59 +1,56 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { CheckCircle2 } from 'lucide-react';
 
-declare global {
-  interface Window {
-    Razorpay: RazorpayConstructor;
-  }
-}
-
-type RazorpayConstructor = new (options: RazorpayOptions) => RazorpayInstance;
-
-interface RazorpayInstance {
-  open(): void;
-}
-
-interface RazorpayOptions {
-  key: string;
-  amount: number;
-  currency: string;
+type Doctor = {
+  id: string;
   name: string;
-  description: string;
-  handler: (response: RazorpayPaymentResponse) => void;
-  prefill: {
-    name: string;
-    email: string;
-    contact: string;
-  };
-  theme: {
-    color: string;
-  };
-}
-
-interface RazorpayPaymentResponse {
-  razorpay_payment_id: string;
-  razorpay_order_id?: string;
-  razorpay_signature?: string;
-}
+  specialization: string;
+  qualifications: string;
+  experience_years: number;
+  languages: string[];
+  profile_picture_url: string | null;
+};
 
 export default function StartConsultationForm() {
   const { user } = useUser();
   const router = useRouter();
   const supabase = createClientComponentClient();
 
-  const [symptom, setSymptom] = useState('');
-  const [details, setDetails] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [doctorId, setDoctorId] = useState('');
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
+
+  useEffect(() => {
+    const loadDoctors = async () => {
+      const { data, error } = await supabase
+        .from('doctors')
+        .select('*')
+        .eq('is_available', true);
+
+      if (error) {
+        console.error('Error loading doctors:', error);
+      } else {
+        setDoctors(data);
+      }
+    };
+
+    loadDoctors();
+  }, [supabase]);
 
   const loadRazorpay = () => {
     return new Promise((resolve) => {
@@ -66,13 +63,20 @@ export default function StartConsultationForm() {
   };
 
   const handleSubmit = async () => {
-    if (!symptom.trim()) {
-      setError('Please describe your symptoms.');
+    const errors: { [key: string]: string } = {};
+
+    if (!title.trim()) errors.title = 'Please enter a short summary.';
+    if (!description.trim()) errors.description = 'Please describe your symptoms.';
+    if (!doctorId.trim()) errors.doctor = 'Please select a doctor.';
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       return;
     }
 
-    setError('');
     setLoading(true);
+    setError('');
+    setFieldErrors({});
 
     const res = await loadRazorpay();
     if (!res) {
@@ -81,24 +85,26 @@ export default function StartConsultationForm() {
       return;
     }
 
-    const options = {
+    const razorpayOptions = {
       key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '',
       amount: 50000,
       currency: 'INR',
-      name: 'Consult Dr. Madhumita Mazumdar',
-      description: 'Online Consultation',
-      handler: async function (response: RazorpayPaymentResponse) {
-        const paymentId = response.razorpay_payment_id;
+      name: 'Dr Madhumita Mazumdar',
+      description: ' Online Consultation Payment',
+      image: '/logo.png',
+      handler: async (response: any) => {
+        const { razorpay_payment_id } = response;
+        console.log(response)
 
-        // Save to Supabase
         const { data, error } = await supabase
           .from('consultations')
           .insert([
             {
               patient_id: user?.id,
-              symptom,
-              details,
-              razorpay_payment_id: paymentId,
+              title,
+              description,
+              doctor_id: doctorId,
+              razorpay_payment_id,
               status: 'pending',
             },
           ])
@@ -106,8 +112,9 @@ export default function StartConsultationForm() {
           .single();
 
         if (error) {
-          alert('Error saving consultation. Please contact support.');
+          alert('Error saving consultation.');
           console.error(error);
+          setLoading(false);
           return;
         }
 
@@ -118,48 +125,119 @@ export default function StartConsultationForm() {
         email: user?.primaryEmailAddress?.emailAddress || '',
         contact: '',
       },
-      theme: {
-        color: '#6366F1',
-      },
+      theme: { color: '#265c8f' },
     };
 
-    const razorpay = new window.Razorpay(options);
+    const razorpay = new (window as any).Razorpay(razorpayOptions);
     razorpay.open();
     setLoading(false);
   };
 
   return (
-    <Card className="max-w-xl mx-auto mt-8">
-      <CardContent className="p-6 space-y-4">
-        <h1 className="text-2xl font-semibold">Start a New Consultation</h1>
+    <div className="min-h-screen bg-[#f5efe6] flex items-center justify-center px-4 py-12">
+      <Card className="w-full max-w-lg rounded-2xl shadow-md border-none bg-white">
+        <CardContent className="p-8 space-y-6">
+          <div className="space-y-1 text-center">
+            <h1 className="text-2xl font-semibold text-[#265c8f]">Tell us what’s bothering you</h1>
+            <p className="text-sm text-[#7895b2]">
+              Fill in a quick summary and choose a doctor who fits your needs.
+            </p>
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="symptom">Symptom / Problem *</Label>
-          <Input
-            id="symptom"
-            value={symptom}
-            onChange={(e) => setSymptom(e.target.value)}
-            placeholder="e.g. Irregular periods, pelvic pain"
-            required
-          />
-        </div>
+          {/* Title */}
+          <div className="space-y-2">
+            <Label htmlFor="title" className="text-[#265c8f] font-medium">
+              Issue Summary
+            </Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Lower abdominal pain"
+              className={`rounded-xl border ${
+                fieldErrors.title ? 'border-red-500' : 'border-[#e8dfca]'
+              } focus:border-[#265c8f]`}
+            />
+            {fieldErrors.title && <p className="text-xs text-red-500">{fieldErrors.title}</p>}
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="details">Additional Details (optional)</Label>
-          <Textarea
-            id="details"
-            value={details}
-            onChange={(e) => setDetails(e.target.value)}
-            placeholder="Duration, changes, medications, etc."
-          />
-        </div>
+          {/* Description */}
+          <div className="space-y-2">
+            <Label htmlFor="description" className="text-[#265c8f] font-medium">
+              Details
+            </Label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe your symptoms..."
+              className={`rounded-xl border ${
+                fieldErrors.description ? 'border-red-500' : 'border-[#e8dfca]'
+              } focus:border-[#265c8f]`}
+            />
+            {fieldErrors.description && (
+              <p className="text-xs text-red-500">{fieldErrors.description}</p>
+            )}
+          </div>
 
-        {error && <p className="text-red-500 text-sm">{error}</p>}
+          {/* Doctor Selection */}
+          <div className="space-y-2">
+            <Label className="text-[#265c8f] font-medium">Choose a Doctor</Label>
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+              {doctors.map((doctor) => {
+                const isSelected = doctorId === doctor.id;
+                return (
+                  <div
+                    key={doctor.id}
+                    onClick={() => setDoctorId(doctor.id)}
+                    className={`relative flex items-start gap-4 p-4 border rounded-xl cursor-pointer transition ${
+                      isSelected
+                        ? 'bg-[#e8dfca] border-[#265c8f]'
+                        : 'bg-white border-[#eee] hover:bg-[#f9f6f1]'
+                    }`}
+                  >
+                    {isSelected && (
+                      <CheckCircle2
+                        className="absolute top-2 right-2 text-green-600"
+                        size={20}
+                      />
+                    )}
+                    <Avatar>
+                      <AvatarImage src={doctor.profile_picture_url || ''} />
+                      <AvatarFallback>{doctor.name[0]}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-semibold text-[#265c8f]">{doctor.name}</p>
+                      <p className="text-sm text-gray-600">
+                        {doctor.specialization} · {doctor.experience_years}+ yrs
+                      </p>
+                      <p className="text-xs text-gray-500">{doctor.qualifications}</p>
+                      <p className="text-xs text-gray-500">
+                        Languages: {doctor.languages?.join(', ')}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+              {doctors.length === 0 && (
+                <p className="text-sm text-gray-500 italic">
+                  No doctors are currently available.
+                </p>
+              )}
+              {fieldErrors.doctor && <p className="text-xs text-red-500">{fieldErrors.doctor}</p>}
+            </div>
+          </div>
 
-        <Button onClick={handleSubmit} className="w-full mt-2" disabled={loading}>
-          {loading ? 'Processing...' : 'Pay ₹500 & Start Consultation'}
-        </Button>
-      </CardContent>
-    </Card>
+          {/* Submit */}
+          <Button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="w-full mt-4 bg-[#265c8f] text-white hover:bg-[#1f4c75] rounded-xl py-6 text-base font-medium"
+          >
+            {loading ? 'Processing...' : 'Complete Payment'}
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
