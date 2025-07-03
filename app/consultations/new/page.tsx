@@ -22,6 +22,33 @@ type Doctor = {
   profile_picture_url: string | null;
 };
 
+// Razorpay global typing
+declare global {
+  interface Window {
+    Razorpay: new (options: RazorpayOptions) => {
+      open: () => void;
+    };
+  }
+}
+
+interface RazorpayOptions {
+  key: string;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  image: string;
+  handler: (response: { razorpay_payment_id: string }) => void;
+  prefill: {
+    name: string;
+    email: string;
+    contact: string;
+  };
+  theme: {
+    color: string;
+  };
+}
+
 export default function StartConsultationForm() {
   const { user } = useUser();
   const router = useRouter();
@@ -31,7 +58,6 @@ export default function StartConsultationForm() {
   const [description, setDescription] = useState('');
   const [doctorId, setDoctorId] = useState('');
   const [doctors, setDoctors] = useState<Doctor[]>([]);
-  
   const [loading, setLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
 
@@ -75,7 +101,6 @@ export default function StartConsultationForm() {
     }
 
     setLoading(true);
-    
     setFieldErrors({});
 
     const res = await loadRazorpay();
@@ -85,16 +110,15 @@ export default function StartConsultationForm() {
       return;
     }
 
-    const razorpayOptions = {
+    const razorpayOptions: RazorpayOptions = {
       key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '',
       amount: 50000,
       currency: 'INR',
       name: 'Dr Madhumita Mazumdar',
-      description: ' Online Consultation Payment',
+      description: 'Online Consultation Payment',
       image: '/logo.png',
-      handler: async (response: { razorpay_payment_id: string }) => {
+      handler: async (response) => {
         const { razorpay_payment_id } = response;
-        console.log(response)
 
         const { data, error } = await supabase
           .from('consultations')
@@ -128,7 +152,7 @@ export default function StartConsultationForm() {
       theme: { color: '#265c8f' },
     };
 
-    const razorpay = new (window as any).Razorpay(razorpayOptions);
+    const razorpay = new window.Razorpay(razorpayOptions);
     razorpay.open();
     setLoading(false);
   };
@@ -138,7 +162,7 @@ export default function StartConsultationForm() {
       <Card className="w-full max-w-lg rounded-2xl shadow-md border-none bg-white">
         <CardContent className="p-8 space-y-6">
           <div className="space-y-1 text-center">
-            <h1 className="text-2xl font-semibold text-[#265c8f]">Tell us what's bothering you</h1>
+            <h1 className="text-2xl font-semibold text-[#265c8f]">Tell us what&apos;s bothering you</h1>
             <p className="text-sm text-[#7895b2]">
               Fill in a quick summary and choose a doctor who fits your needs.
             </p>

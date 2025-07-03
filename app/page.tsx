@@ -12,10 +12,10 @@ export default function HomePage() {
         {/* Hero Section */}
         <section className="text-center space-y-6">
           <h1 className="text-3xl md:text-4xl font-bold text-[#265c8f]">
-            Expert Women's Health Care — From the Comfort of Your Home
+            Expert Women&apos;s Health Care — From the Comfort of Your Home
           </h1>
           <p className="text-[#4a4a4a] text-base max-w-md mx-auto leading-relaxed">
-            We understand how personal health can feel overwhelming. That&#39;s why we&#39;ve created a safe, simple, and private way for you to get answers, reassurance, and treatment — without stepping outside your home.
+            We understand how personal health can feel overwhelming. That&apos;s why we&apos;ve created a safe, simple, and private way for you to get answers, reassurance, and treatment — without stepping outside your home.
           </p>
           <div className="mt-6 flex justify-center gap-4 flex-wrap">
             <Link href="/consultations/new">
@@ -42,7 +42,7 @@ export default function HomePage() {
           <div className="grid sm:grid-cols-3 gap-6">
             <Card className="bg-white rounded-2xl shadow-sm border border-[#e8dfca]">
               <CardContent className="p-6 text-center space-y-2">
-                <h3 className="font-semibold text-lg text-[#265c8f]">1. Tell Us What&#39;s Bothering You</h3>
+                <h3 className="font-semibold text-lg text-[#265c8f]">1. Tell Us What&apos;s Bothering You</h3>
                 <p className="text-sm text-muted-foreground">
                   Share your symptoms in plain language — no medical terms needed. Your story matters.
                 </p>
@@ -51,7 +51,7 @@ export default function HomePage() {
 
             <Card className="bg-white rounded-2xl shadow-sm border border-[#e8dfca]">
               <CardContent className="p-6 text-center space-y-2">
-                <h3 className="font-semibold text-lg text-[#265c8f]">2. Select Your Doctor & Pay Securely</h3>
+                <h3 className="font-semibold text-lg text-[#265c8f]">2. Select Your Doctor &amp; Pay Securely</h3>
                 <p className="text-sm text-muted-foreground">
                   Choose a trusted doctor and make a ₹500 one-time payment. No hidden charges.
                 </p>
@@ -76,7 +76,7 @@ export default function HomePage() {
             <strong>Dr. Madhumita Das Mazumdar</strong>, a Senior Consultant Gynecologist with over 30 years of experience.
           </p>
           <p className="text-base text-muted-foreground leading-relaxed">
-            Whether it&#39;s painful periods, PCOS, fertility, menopause, or questions you&#39;re shy to ask — we&#39;re here to help you feel heard and cared for.
+            Whether it&apos;s painful periods, PCOS, fertility, menopause, or questions you&apos;re shy to ask — we&apos;re here to help you feel heard and cared for.
           </p>
           <p className="italic text-sm text-gray-500 mt-1">Trusted. Confidential. Designed for Women.</p>
         </section>

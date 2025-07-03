@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
@@ -52,19 +52,7 @@ export default function ConsultationDetailPage() {
   const [loading, setLoading] = useState(true);
   const [commentSubmitting, setCommentSubmitting] = useState(false);
 
-  
-
-  useEffect(() => {
-    fetchConsultation();
-  }, [id]);
-
-  useEffect(() => {
-    if (consultation?.doctor_id) {
-      fetchDoctorDetails(consultation.doctor_id);
-    }
-  }, [consultation]);
-
-  const fetchConsultation = async () => {
+  const fetchConsultation = useCallback(async () => {
     const { data, error } = await supabase
       .from('consultations')
       .select('*')
@@ -79,9 +67,9 @@ export default function ConsultationDetailPage() {
     }
 
     setLoading(false);
-  };
+  }, [id, supabase]);
 
-  const fetchDoctorDetails = async (doctorId: string) => {
+  const fetchDoctorDetails = useCallback(async (doctorId: string) => {
     const { data, error } = await supabase
       .from('doctors')
       .select(
@@ -92,7 +80,17 @@ export default function ConsultationDetailPage() {
 
     if (!error) setDoctor(data);
     else console.error('Error fetching doctor:', error);
-  };
+  }, [supabase]);
+
+  useEffect(() => {
+    fetchConsultation();
+  }, [fetchConsultation]);
+
+  useEffect(() => {
+    if (consultation?.doctor_id) {
+      fetchDoctorDetails(consultation.doctor_id);
+    }
+  }, [consultation, fetchDoctorDetails]);
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
