@@ -18,17 +18,7 @@ interface Consultation {
   description: string;
   doctor_id: string;
   status: 'pending' | 'completed' | 'closed' | string;
-}
-
-interface Comment {
-  id: string;
-  content: string;
-  created_at: string;
-  user_id: string;
-  consultation_id: string;
-  user_name: string;
-  user_image: string;
-  role: string;
+  content: ChatMessage[];
 }
 
 interface Doctor {
@@ -42,6 +32,14 @@ interface Doctor {
   whatsapp_number?: string;
 }
 
+interface ChatMessage {
+  timestamp: string;
+  message: string;
+  name: string;
+  role: string;
+  avatar_url: string;
+}
+
 export default function ConsultationDetailPage() {
   const supabase = createClientComponentClient();
   const { id } = useParams();
@@ -49,16 +47,15 @@ export default function ConsultationDetailPage() {
 
   const [consultation, setConsultation] = useState<Consultation | null>(null);
   const [doctor, setDoctor] = useState<Doctor | null>(null);
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [comments, setComments] = useState<ChatMessage[]>([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [commentSubmitting, setCommentSubmitting] = useState(false);
 
-  const isDoctor = user?.publicMetadata?.role === 'doctor';
+  
 
   useEffect(() => {
     fetchConsultation();
-    fetchComments();
   }, [id]);
 
   useEffect(() => {
@@ -74,8 +71,13 @@ export default function ConsultationDetailPage() {
       .eq('id', id)
       .single();
 
-    if (!error) setConsultation(data);
-    else console.error('Error fetching consultation:', error);
+    if (!error && data) {
+      setConsultation(data);
+      setComments(data.content || []);
+    } else {
+      console.error('Error fetching consultation:', error);
+    }
+
     setLoading(false);
   };
 
@@ -92,44 +94,32 @@ export default function ConsultationDetailPage() {
     else console.error('Error fetching doctor:', error);
   };
 
-  const fetchComments = async () => {
-    const { data, error } = await supabase
-      .from('consultation_messages')
-      .select('*, user:profiles(name, avatar_url, role)')
-      .eq('consultation_id', id)
-      .order('created_at', { ascending: true });
-
-    if (!error) {
-      const formatted = data.map((comment: any) => ({
-        ...comment,
-        user_name: comment.user?.name || 'User',
-        user_image: comment.user?.avatar_url || '',
-        role: comment.user?.role || 'user',
-      }));
-      setComments(formatted);
-    } else {
-      console.error('Error loading messages:', error);
-    }
-  };
-
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
-
     setCommentSubmitting(true);
-    const { error } = await supabase.from('consultation_messages').insert([
-      {
-        consultation_id: id,
-        content: newComment.trim(),
-        user_id: user?.id,
-      },
-    ]);
+
+    const newMessage: ChatMessage = {
+      timestamp: new Date().toISOString(),
+      message: newComment.trim(),
+      name: user?.fullName || 'Anonymous',
+      role: user?.publicMetadata?.role === 'doctor' ? 'doctor' : 'patient',
+      avatar_url: user?.imageUrl || '',
+    };
+
+    const updatedMessages = [...comments, newMessage];
+
+    const { error } = await supabase
+      .from('consultations')
+      .update({ content: updatedMessages })
+      .eq('id', id);
 
     if (!error) {
+      setComments(updatedMessages);
       setNewComment('');
-      fetchComments();
     } else {
-      console.error('Error submitting message:', error);
+      console.error('Error updating conversation:', error);
     }
+
     setCommentSubmitting(false);
   };
 
@@ -143,7 +133,9 @@ export default function ConsultationDetailPage() {
   }
 
   if (!consultation) {
-    return <p className="text-center mt-10 text-muted-foreground">Consultation not found.</p>;
+    return (
+      <p className="text-center mt-10 text-muted-foreground">Consultation not found.</p>
+    );
   }
 
   return (
@@ -215,11 +207,11 @@ export default function ConsultationDetailPage() {
         {comments.length === 0 ? (
           <p className="text-sm text-muted-foreground">No messages yet.</p>
         ) : (
-          comments.map((msg) => {
+          comments.map((msg, index) => {
             const isFromDoctor = msg.role === 'doctor';
             return (
               <div
-                key={msg.id}
+                key={index}
                 className={`flex ${isFromDoctor ? 'justify-end' : 'justify-start'}`}
               >
                 <div
@@ -228,8 +220,8 @@ export default function ConsultationDetailPage() {
                   }`}
                 >
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={msg.user_image} />
-                    <AvatarFallback>{msg.user_name?.[0]}</AvatarFallback>
+                    <AvatarImage src={msg.avatar_url} />
+                    <AvatarFallback>{msg.name?.[0]}</AvatarFallback>
                   </Avatar>
                   <div
                     className={`rounded-lg px-4 py-2 text-sm ${
@@ -238,10 +230,10 @@ export default function ConsultationDetailPage() {
                         : 'bg-gray-100 text-gray-900'
                     }`}
                   >
-                    <p className="font-medium">{msg.user_name}</p>
-                    <p className="whitespace-pre-line">{msg.content}</p>
+                    <p className="font-medium">{msg.name}</p>
+                    <p className="whitespace-pre-line">{msg.message}</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {new Date(msg.created_at).toLocaleString()}
+                      {new Date(msg.timestamp).toLocaleString()}
                     </p>
                   </div>
                 </div>

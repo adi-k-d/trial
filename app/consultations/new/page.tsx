@@ -31,7 +31,7 @@ export default function StartConsultationForm() {
   const [description, setDescription] = useState('');
   const [doctorId, setDoctorId] = useState('');
   const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [error, setError] = useState('');
+  
   const [loading, setLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
 
@@ -53,7 +53,7 @@ export default function StartConsultationForm() {
   }, [supabase]);
 
   const loadRazorpay = () => {
-    return new Promise((resolve) => {
+    return new Promise<boolean>((resolve) => {
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
       script.onload = () => resolve(true);
@@ -75,7 +75,7 @@ export default function StartConsultationForm() {
     }
 
     setLoading(true);
-    setError('');
+    
     setFieldErrors({});
 
     const res = await loadRazorpay();
@@ -92,7 +92,7 @@ export default function StartConsultationForm() {
       name: 'Dr Madhumita Mazumdar',
       description: ' Online Consultation Payment',
       image: '/logo.png',
-      handler: async (response: any) => {
+      handler: async (response: { razorpay_payment_id: string }) => {
         const { razorpay_payment_id } = response;
         console.log(response)
 
@@ -138,7 +138,7 @@ export default function StartConsultationForm() {
       <Card className="w-full max-w-lg rounded-2xl shadow-md border-none bg-white">
         <CardContent className="p-8 space-y-6">
           <div className="space-y-1 text-center">
-            <h1 className="text-2xl font-semibold text-[#265c8f]">Tell us what’s bothering you</h1>
+            <h1 className="text-2xl font-semibold text-[#265c8f]">Tell us what's bothering you</h1>
             <p className="text-sm text-[#7895b2]">
               Fill in a quick summary and choose a doctor who fits your needs.
             </p>

@@ -7,34 +7,42 @@ import { Button } from '@/components/ui/button';
 
 export default function DoctorPage() {
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10 space-y-10">
+    <div className="max-w-screen-md mx-auto px-4 md:px-6 py-10 space-y-10">
+      {/* Profile Section */}
       <section className="text-center">
         <Image
           src="/dr-madhumita-mazumdar.jpeg"
           alt="Dr. Madhumita Mazumdar"
           width={160}
           height={160}
-          className="rounded-full mx-auto mb-4 border"
+          className="rounded-full mx-auto mb-4 border shadow-sm"
         />
-        <h1 className="text-3xl font-bold text-indigo-700">Dr. Madhumita Mazumdar</h1>
-        <p className="text-gray-600 text-sm mt-1">MD (O&G) – Senior Consultant Gynecologist</p>
+        <h1 className="text-3xl font-bold text-primary">Dr. Madhumita Mazumdar</h1>
+        <p className="text-muted-foreground text-sm mt-1">
+          MD (O&G) – Senior Consultant Gynecologist
+        </p>
       </section>
 
-      <Card>
+      {/* Experience Section */}
+      <Card className="shadow-sm rounded-2xl">
         <CardContent className="p-6 space-y-4">
-          <h2 className="text-xl font-semibold">Experience & Background</h2>
+          <h2 className="text-xl font-semibold text-foreground">Experience & Background</h2>
           <p className="text-muted-foreground">
-            Dr. Madhumita Mazumdar brings over 30 years of experience in Obstetrics and Gynecology. She has served as Senior Consultant at Marwari Maternity Hospital for 12+ years and now practices at Aries OB-GYN Clinic in Guwahati.
+            Dr. Madhumita Mazumdar brings over 30 years of experience in Obstetrics and Gynecology.
+            She has served as Senior Consultant at Marwari Maternity Hospital for 12+ years and now
+            practices at Aries OB-GYN Clinic in Guwahati.
           </p>
           <p className="text-muted-foreground">
-            Her expertise includes managing PCOS, infertility, pregnancy care, menopause, menstrual problems, preventive screening, and adolescent health.
+            Her expertise includes managing PCOS, infertility, pregnancy care, menopause, menstrual
+            problems, preventive screening, and adolescent health.
           </p>
         </CardContent>
       </Card>
 
-      <Card>
+      {/* Why Online Section */}
+      <Card className="shadow-sm rounded-2xl">
         <CardContent className="p-6 space-y-4">
-          <h2 className="text-xl font-semibold">Why Consult Her Online?</h2>
+          <h2 className="text-xl font-semibold text-foreground">Why Consult Her Online?</h2>
           <ul className="list-disc ml-5 text-muted-foreground space-y-1">
             <li>Trusted care for sensitive issues from your home</li>
             <li>Fast, text-based consultations via secure platform</li>
@@ -44,35 +52,48 @@ export default function DoctorPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      {/* Booking Section */}
+      <Card className="shadow-sm rounded-2xl">
         <CardContent className="p-6 space-y-4">
-          <h2 className="text-xl font-semibold">Booking & Availability</h2>
-          <p className="text-muted-foreground">Dr. Mazumdar is available for online consultations Monday to Friday, 9:00 AM – 5:00 PM IST.</p>
+          <h2 className="text-xl font-semibold text-foreground">Booking & Availability</h2>
+          <p className="text-muted-foreground">
+            Dr. Mazumdar is available for online consultations Monday to Friday, 9:00 AM – 5:00 PM IST.
+          </p>
           <Link href="/consult">
-            <Button className="mt-2">Start a Consultation</Button>
+            <Button className="mt-2 w-full sm:w-auto">Start a Consultation</Button>
           </Link>
         </CardContent>
       </Card>
 
-      <Card>
+      {/* Testimonials Section */}
+      <Card className="shadow-sm rounded-2xl">
         <CardContent className="p-6 space-y-4">
-          <h2 className="text-xl font-semibold">Patient Testimonials</h2>
-          <p className="text-muted-foreground italic">“Dr. Mazumdar helped me navigate my PCOS symptoms with kindness and clarity. Highly recommend!” – R.P.</p>
-          <p className="text-muted-foreground italic">“Very responsive and empathetic. I got the answers I needed quickly.” – S.D.</p>
+          <h2 className="text-xl font-semibold text-foreground">Patient Testimonials</h2>
+          <p className="text-muted-foreground italic">
+            “Dr. Mazumdar helped me navigate my PCOS symptoms with kindness and clarity. Highly recommend!” – R.P.
+          </p>
+          <p className="text-muted-foreground italic">
+            “Very responsive and empathetic. I got the answers I needed quickly.” – S.D.
+          </p>
           <Link href="/testimonials">
-            <Button variant="outline" className="mt-2">Read More Testimonials</Button>
+            <Button variant="outline" className="mt-2 w-full sm:w-auto">
+              Read More Testimonials
+            </Button>
           </Link>
         </CardContent>
       </Card>
 
-      <Card>
+      {/* Credentials Section */}
+      <Card className="shadow-sm rounded-2xl">
         <CardContent className="p-6 space-y-4">
-          <h2 className="text-xl font-semibold">Credentials</h2>
+          <h2 className="text-xl font-semibold text-foreground">Credentials</h2>
           <ul className="list-disc ml-5 text-muted-foreground space-y-1">
             <li>MD – Obstetrics & Gynecology, Gauhati Medical College</li>
             <li>Senior Consultant – Marwari Maternity Hospital (12+ years)</li>
             <li>Founder – Aries OB-GYN Clinic, Guwahati</li>
-            <li>Member – Federation of Obstetric and Gynaecological Societies of India (FOGSI)</li>
+            <li>
+              Member – Federation of Obstetric and Gynaecological Societies of India (FOGSI)
+            </li>
           </ul>
         </CardContent>
       </Card>
