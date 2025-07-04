@@ -66,7 +66,7 @@ export default function StartConsultationForm() {
       const { data, error } = await supabase
         .from('doctors')
         .select('*')
-        .eq('is_available', true);
+        /*.eq('is_available', true);*/
 
       if (error) {
         console.error('Error loading doctors:', error);
@@ -206,51 +206,26 @@ export default function StartConsultationForm() {
 
           {/* Doctor Selection */}
           <div className="space-y-2">
-            <Label className="text-[#265c8f] font-medium">Choose a Doctor</Label>
-            <div className="space-y-3 max-h-64 overflow-y-auto">
-              {doctors.map((doctor) => {
-                const isSelected = doctorId === doctor.id;
-                return (
-                  <div
-                    key={doctor.id}
-                    onClick={() => setDoctorId(doctor.id)}
-                    className={`relative flex items-start gap-4 p-4 border rounded-xl cursor-pointer transition ${
-                      isSelected
-                        ? 'bg-[#e8dfca] border-[#265c8f]'
-                        : 'bg-white border-[#eee] hover:bg-[#f9f6f1]'
-                    }`}
-                  >
-                    {isSelected && (
-                      <CheckCircle2
-                        className="absolute top-2 right-2 text-green-600"
-                        size={20}
-                      />
-                    )}
-                    <Avatar>
-                      <AvatarImage src={doctor.profile_picture_url || ''} />
-                      <AvatarFallback>{doctor.name[0]}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="text-sm font-semibold text-[#265c8f]">{doctor.name}</p>
-                      <p className="text-sm text-gray-600">
-                        {doctor.specialization} · {doctor.experience_years}+ yrs
-                      </p>
-                      <p className="text-xs text-gray-500">{doctor.qualifications}</p>
-                      <p className="text-xs text-gray-500">
-                        Languages: {doctor.languages?.join(', ')}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-              {doctors.length === 0 && (
-                <p className="text-sm text-gray-500 italic">
-                  No doctors are currently available.
-                </p>
-              )}
-              {fieldErrors.doctor && <p className="text-xs text-red-500">{fieldErrors.doctor}</p>}
-            </div>
-          </div>
+          <Label htmlFor="doctor" className="text-[#265c8f] font-medium">
+            Choose a Doctor
+          </Label>
+          <select
+            id="doctor"
+            value={doctorId}
+            onChange={(e) => setDoctorId(e.target.value)}
+            className={`w-full px-4 py-3 rounded-xl border bg-white text-sm text-[#265c8f] ${
+              fieldErrors.doctor ? 'border-red-500' : 'border-[#e8dfca]'
+            } focus:outline-none focus:ring-2 focus:ring-[#265c8f]`}
+          >
+            <option value="">-- Select a doctor --</option>
+            {doctors.map((doctor) => (
+              <option key={doctor.id} value={doctor.id}>
+                {doctor.name} — {doctor.specialization}
+              </option>
+            ))}
+          </select>
+          {fieldErrors.doctor && <p className="text-xs text-red-500">{fieldErrors.doctor}</p>}
+        </div>
 
           {/* Submit */}
           <Button
