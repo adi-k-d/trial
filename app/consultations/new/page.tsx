@@ -41,7 +41,7 @@ interface RazorpayOptions {
 
 // WhatsApp Notification Helper
 async function sendWhatsappNotification(message: string) {
-  const to = '+12177545719'; // your Twilio sandbox test number
+  const to = '+918486277946'; // your Twilio sandbox test number
   try {
     const res = await fetch('/api/send-whatsapp', {
       method: 'POST',
