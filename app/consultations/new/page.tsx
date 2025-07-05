@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 
-
 type Doctor = {
   id: string;
   name: string;
@@ -21,12 +20,10 @@ type Doctor = {
   profile_picture_url: string | null;
 };
 
-// Razorpay global typing
+// Razorpay typings
 declare global {
   interface Window {
-    Razorpay: new (options: RazorpayOptions) => {
-      open: () => void;
-    };
+    Razorpay: new (options: RazorpayOptions) => { open: () => void };
   }
 }
 
@@ -38,14 +35,24 @@ interface RazorpayOptions {
   description: string;
   image: string;
   handler: (response: { razorpay_payment_id: string }) => void;
-  prefill: {
-    name: string;
-    email: string;
-    contact: string;
-  };
-  theme: {
-    color: string;
-  };
+  prefill: { name: string; email: string; contact: string };
+  theme: { color: string };
+}
+
+// WhatsApp Notification Helper
+async function sendWhatsappNotification(message: string) {
+  const to = '+12177545719'; // your Twilio sandbox test number
+  try {
+    const res = await fetch('/api/send-whatsapp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, message }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+  } catch (err) {
+    console.error('WhatsApp error:', err);
+  }
 }
 
 export default function StartConsultationForm() {
@@ -58,52 +65,38 @@ export default function StartConsultationForm() {
   const [doctorId, setDoctorId] = useState('');
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    const loadDoctors = async () => {
-      const { data, error } = await supabase
-        .from('doctors')
-        .select('*')
-        /*.eq('is_available', true);*/
-
-      if (error) {
-        console.error('Error loading doctors:', error);
-      } else {
-        setDoctors(data);
-      }
-    };
-
-    loadDoctors();
+    (async () => {
+      const { data, error } = await supabase.from('doctors').select('*');
+      if (error) console.error('Error loading doctors:', error);
+      else setDoctors(data);
+    })();
   }, [supabase]);
 
-  const loadRazorpay = () => {
-    return new Promise<boolean>((resolve) => {
+  const loadRazorpay = () =>
+    new Promise<boolean>((resolve) => {
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
       script.onload = () => resolve(true);
       script.onerror = () => resolve(false);
       document.body.appendChild(script);
     });
-  };
 
   const handleSubmit = async () => {
-    const errors: { [key: string]: string } = {};
-
+    const errors: Record<string, string> = {};
     if (!title.trim()) errors.title = 'Please enter a short summary.';
     if (!description.trim()) errors.description = 'Please describe your symptoms.';
     if (!doctorId.trim()) errors.doctor = 'Please select a doctor.';
 
-    if (Object.keys(errors).length > 0) {
+    if (Object.keys(errors).length) {
       setFieldErrors(errors);
       return;
     }
 
     setLoading(true);
-    setFieldErrors({});
-
-    const res = await loadRazorpay();
-    if (!res) {
+    if (!(await loadRazorpay())) {
       alert('Failed to load Razorpay SDK');
       setLoading(false);
       return;
@@ -116,9 +109,7 @@ export default function StartConsultationForm() {
       name: 'Dr Madhumita Mazumdar',
       description: 'Online Consultation Payment',
       image: '/logo.png',
-      handler: async (response) => {
-        const { razorpay_payment_id } = response;
-
+      handler: async ({ razorpay_payment_id }) => {
         const { data, error } = await supabase
           .from('consultations')
           .insert([
@@ -133,14 +124,41 @@ export default function StartConsultationForm() {
           ])
           .select()
           .single();
-
+      
         if (error) {
           alert('Error saving consultation.');
           console.error(error);
-          setLoading(false);
           return;
         }
-
+      
+        // ✅ Build first message entry
+        const initialMessage = {
+          sender_id: user?.id,
+          role: 'patient',
+          message: description,
+          timestamp: new Date().toISOString(),
+        };
+      
+        // ✅ Append to `content` JSONB array
+        const { error: contentError } = await supabase
+          .from('consultations')
+          .update({
+            content: supabase.rpc('jsonb_append', {
+              target: 'content',
+              value: JSON.stringify(initialMessage),
+            }),
+          })
+          .eq('id', data.id);
+      
+        if (contentError) {
+          console.error('Failed to append message to content:', contentError);
+        }
+      
+        // ✅ WhatsApp notification
+        await sendWhatsappNotification(
+          `🩺 New consultation booked!\nPatient: ${user?.fullName}\nTopic: ${title}\n🔗 View: https://app.ariesobgynclinic.com/consultations/${data.id}`
+        );
+      
         router.push(`/consultations/${data.id}`);
       },
       prefill: {
@@ -151,8 +169,7 @@ export default function StartConsultationForm() {
       theme: { color: '#265c8f' },
     };
 
-    const razorpay = new window.Razorpay(razorpayOptions);
-    razorpay.open();
+    new window.Razorpay(razorpayOptions).open();
     setLoading(false);
   };
 
@@ -161,13 +178,15 @@ export default function StartConsultationForm() {
       <Card className="w-full max-w-lg rounded-2xl shadow-md border-none bg-white">
         <CardContent className="p-8 space-y-6">
           <div className="space-y-1 text-center">
-            <h1 className="text-2xl font-semibold text-[#265c8f]">Tell us what&apos;s bothering you</h1>
+            <h1 className="text-2xl font-semibold text-[#265c8f]">
+              Tell us what&apos;s bothering you
+            </h1>
             <p className="text-sm text-[#7895b2]">
               Fill in a quick summary and choose a doctor who fits your needs.
             </p>
           </div>
 
-          {/* Title */}
+          {/* Issue Summary */}
           <div className="space-y-2">
             <Label htmlFor="title" className="text-[#265c8f] font-medium">
               Issue Summary
@@ -184,7 +203,7 @@ export default function StartConsultationForm() {
             {fieldErrors.title && <p className="text-xs text-red-500">{fieldErrors.title}</p>}
           </div>
 
-          {/* Description */}
+          {/* Details */}
           <div className="space-y-2">
             <Label htmlFor="description" className="text-[#265c8f] font-medium">
               Details
@@ -205,26 +224,26 @@ export default function StartConsultationForm() {
 
           {/* Doctor Selection */}
           <div className="space-y-2">
-          <Label htmlFor="doctor" className="text-[#265c8f] font-medium">
-            Choose a Doctor
-          </Label>
-          <select
-            id="doctor"
-            value={doctorId}
-            onChange={(e) => setDoctorId(e.target.value)}
-            className={`w-full px-4 py-3 rounded-xl border bg-white text-sm text-[#265c8f] ${
-              fieldErrors.doctor ? 'border-red-500' : 'border-[#e8dfca]'
-            } focus:outline-none focus:ring-2 focus:ring-[#265c8f]`}
-          >
-            <option value="">-- Select a doctor --</option>
-            {doctors.map((doctor) => (
-              <option key={doctor.id} value={doctor.id}>
-                {doctor.name} — {doctor.specialization}
-              </option>
-            ))}
-          </select>
-          {fieldErrors.doctor && <p className="text-xs text-red-500">{fieldErrors.doctor}</p>}
-        </div>
+            <Label htmlFor="doctor" className="text-[#265c8f] font-medium">
+              Choose a Doctor
+            </Label>
+            <select
+              id="doctor"
+              value={doctorId}
+              onChange={(e) => setDoctorId(e.target.value)}
+              className={`w-full px-4 py-3 rounded-xl border bg-white text-sm text-[#265c8f] ${
+                fieldErrors.doctor ? 'border-red-500' : 'border-[#e8dfca]'
+              } focus:outline-none focus:ring-2 focus:ring-[#265c8f]`}
+            >
+              <option value="">-- Select a doctor --</option>
+              {doctors.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name} — {d.specialization}
+                </option>
+              ))}
+            </select>
+            {fieldErrors.doctor && <p className="text-xs text-red-500">{fieldErrors.doctor}</p>}
+          </div>
 
           {/* Submit */}
           <Button
@@ -232,7 +251,7 @@ export default function StartConsultationForm() {
             disabled={loading}
             className="w-full mt-4 bg-[#265c8f] text-white hover:bg-[#1f4c75] rounded-xl py-6 text-base font-medium"
           >
-            {loading ? 'Processing...' : 'Complete Payment'}
+            {loading ? 'Processing…' : 'Complete Payment'}
           </Button>
         </CardContent>
       </Card>
