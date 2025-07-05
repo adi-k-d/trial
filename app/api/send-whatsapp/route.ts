@@ -25,11 +25,19 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ success: true, sid: result.sid });
-  } catch (error: any) {
-    console.error('Twilio Error:', error.message);
+  } catch (error: unknown) {
+    let errorMessage = 'An unexpected error occurred';
+
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      console.error('Twilio Error:', error.message);
+    } else {
+      console.error('Unknown error:', error);
+    }
+
     return NextResponse.json(
-      { success: false, error: error.message },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }
-} 
+}
