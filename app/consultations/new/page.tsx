@@ -41,7 +41,7 @@ interface RazorpayOptions {
 
 // WhatsApp Notification Helper
 async function sendWhatsappNotification(message: string) {
-  const to = '+918486277946'; // your Twilio sandbox test number
+  const to = '+919864097234'; // your Twilio sandbox test number
   try {
     const res = await fetch('/api/send-whatsapp', {
       method: 'POST',
@@ -153,9 +153,11 @@ export default function StartConsultationForm() {
         if (contentError) {
           console.error('Failed to append message to content:', contentError);
         }
+        
       
         // ✅ WhatsApp notification
         await sendWhatsappNotification(
+          
           `🩺 New consultation booked!\nPatient: ${user?.fullName}\nTopic: ${title}\n🔗 View: https://app.ariesobgynclinic.com/consultations/${data.id}`
         );
       
