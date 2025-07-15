@@ -156,10 +156,15 @@ export default function StartConsultationForm() {
         
       
         // ✅ WhatsApp notification
-        await sendWhatsappNotification(
-          
-          `🩺 New consultation booked!\nPatient: ${user?.fullName}\nTopic: ${title}\n🔗 View: https://app.ariesobgynclinic.com/consultations/${data.id}`
-        );
+        await fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: 'adityakdas7@gmail.com', // doctor/admin notification email
+            subject: 'New Consultation Booked',
+            text: `🩺 New consultation booked!\nPatient: ${user?.fullName}\nTopic: ${title}\nView: https://app.ariesobgynclinic.com/consultations/${data.id}`,
+          }),
+        });
       
         router.push(`/consultations/${data.id}`);
       },
@@ -248,6 +253,8 @@ export default function StartConsultationForm() {
           </div>
 
           {/* Submit */}
+          
+
           <Button
             onClick={handleSubmit}
             disabled={loading}
