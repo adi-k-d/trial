@@ -40,20 +40,7 @@ interface RazorpayOptions {
 }
 
 // WhatsApp Notification Helper
-async function sendWhatsappNotification(message: string) {
-  const to = '+919864097234'; // your Twilio sandbox test number
-  try {
-    const res = await fetch('/api/send-whatsapp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to, message }),
-    });
-    const data = await res.json();
-    if (!data.success) throw new Error(data.error);
-  } catch (err) {
-    console.error('WhatsApp error:', err);
-  }
-}
+
 
 export default function StartConsultationForm() {
   const { user } = useUser();
